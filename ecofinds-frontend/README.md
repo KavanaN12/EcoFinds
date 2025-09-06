@@ -20,7 +20,7 @@ A **sustainable marketplace** web app where users can buy, sell, and track eco-f
 
 ## Demo
 
-> You can add screenshots or GIFs of adding a product, viewing orders, or rating a delivered product.
+> Drive link: https://drive.google.com/file/d/1OUmqr8uq2YtlBMi424Unx-twCVNF-eph/view?usp=drivesdk 
 
 ---
 
