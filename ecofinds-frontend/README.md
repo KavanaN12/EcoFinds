@@ -1,12 +1,90 @@
-# React + Vite
+# Eco Marketplace 🌱
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+![React](https://img.shields.io/badge/React-17.0.2-blue?logo=react&logoColor=white) ![License](https://img.shields.io/badge/License-MIT-green) ![LocalStorage](https://img.shields.io/badge/Storage-localStorage-orange)
 
-Currently, two official plugins are available:
+A **sustainable marketplace** web app where users can buy, sell, and track eco-friendly products, earn EcoPoints, and monitor their environmental impact — all **offline** using `localStorage`.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## Expanding the ESLint configuration
+## Table of Contents
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- [Demo](#demo)  
+- [Features](#features)  
+- [Technologies](#technologies)  
+- [Installation](#installation)  
+- [Usage](#usage)  
+- [Project Structure](#project-structure)  
+- [License](#license)  
+
+---
+
+## Demo
+
+> You can add screenshots or GIFs of adding a product, viewing orders, or rating a delivered product.
+
+---
+
+## Features
+
+### 🌿 User & Seller
+
+- Sign up / log in (stored in `localStorage`)  
+- Profile with username, email, and eco-points  
+
+### 🛍️ Product Management
+
+- Add new product with title, category, description, price  
+- Upload image from device or provide a URL  
+- Contribution description for sustainability  
+- Preview product before submission  
+
+### 🛒 Buyer
+
+- Browse products & view details  
+- Add to cart and place orders  
+- Confirm **Received / Not Received** orders  
+- Rate delivered orders (1–5 stars)  
+- Track estimated delivery dates  
+
+### 🏪 Seller
+
+- View all orders for your products  
+- Update order status:  
+  - Waiting for Production  
+  - Paid  
+  - Shipping (Estimated Date)  
+  - Ready in Remote  
+  - Delivered  
+  - Pending  
+- Set estimated delivery dates  
+- View Not Received flags from buyers  
+
+### 🌟 EcoPoints & Badges
+
+- Earn EcoPoints for product listing & eco-friendly actions  
+- Badges: Newcomer → Eco Beginner → Eco Warrior → EcoSaver  
+
+---
+
+## Technologies
+
+- **React.js** – Frontend library  
+- **React Router** – Page routing  
+- **localStorage** – Offline persistent storage  
+- **JavaScript (ES6+)** – App logic  
+- **CSS** – Styling & responsive design  
+
+---
+
+## Installation
+
+```bash
+# Clone the repository
+git clone <your-repo-url>
+cd sustainable-marketplace
+
+# Install dependencies
+npm install
+
+# Run the app
+npm start
