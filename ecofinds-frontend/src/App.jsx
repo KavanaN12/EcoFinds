@@ -10,6 +10,8 @@ import Cart from './components/Cart.jsx';
 import Dashboard from './components/Dashboard.jsx';
 import PreviousPurchases from './components/PreviousPurchases.jsx';
 import Leaderboard from './components/Leaderboard.jsx';
+import MyOrders from './components/MyOrders.jsx';
+import SellerOrders from './components/SellerOrders.jsx'; // ✅ Optional seller order management
 
 // Helpers for localStorage keys
 const LS = {
@@ -18,8 +20,8 @@ const LS = {
   AUTH: 'eco_auth_v1'
 };
 
+// Initialize sample data
 function initSampleData() {
-  // only set sample products if none exist
   const p = JSON.parse(localStorage.getItem(LS.PRODUCTS) || 'null');
   if (!p) {
     const sampleProducts = [
@@ -53,11 +55,21 @@ function initSampleData() {
     ];
     localStorage.setItem(LS.PRODUCTS, JSON.stringify(sampleProducts));
   }
-  // sample user
+
   const u = JSON.parse(localStorage.getItem(LS.USERS) || 'null');
   if (!u) {
     const sampleUsers = [
-      { email: 'demo@eco.com', username: 'DemoUser', password: 'demo', ecoPoints: 120, badges: ['Eco Warrior 🌍'], transactions: 3, cart: [], purchases: [] }
+      { 
+        email: 'demo@eco.com', 
+        username: 'DemoUser', 
+        password: 'demo', 
+        ecoPoints: 120, 
+        badges: ['Eco Warrior 🌍'], 
+        transactions: 3, 
+        cart: [], 
+        purchases: [], 
+        orders: [] 
+      }
     ];
     localStorage.setItem(LS.USERS, JSON.stringify(sampleUsers));
   }
@@ -88,6 +100,8 @@ export default function App() {
           {auth && <Link to="/dashboard">Dashboard</Link>}
           <Link to="/leaderboard">Leaderboard</Link>
           <Link to="/cart">Cart</Link>
+          {auth && <Link to="/orders">My Orders</Link>}
+          {auth && <Link to="/seller-orders">Manage Orders</Link>} {/* ✅ Seller panel */}
           {auth ? (
             <>
               <span className="nav-user">Hi, {auth.username}</span>
@@ -114,6 +128,8 @@ export default function App() {
           <Route path="/dashboard" element={<Dashboard auth={auth} setAuth={setAuth} />} />
           <Route path="/previous" element={<PreviousPurchases auth={auth} />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/orders" element={<MyOrders auth={auth} />} /> {/* Buyer orders */}
+          <Route path="/seller-orders" element={<SellerOrders auth={auth} />} /> {/* Seller orders */}
           <Route path="*" element={<ProductFeed auth={auth} />} />
         </Routes>
       </main>
