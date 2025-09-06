@@ -11,7 +11,6 @@ export default function MyOrders({ auth }) {
   useEffect(() => {
     if (!auth) return;
     loadOrders();
-    // eslint-disable-next-line
   }, [auth]);
 
   function loadOrders() {
@@ -20,7 +19,6 @@ export default function MyOrders({ auth }) {
     setOrders(me?.orders || []);
   }
 
-  // Buyer confirms Received (successful) or Not Received
   function confirmReceived(orderId, received) {
     const users = JSON.parse(localStorage.getItem(LS_USERS) || '[]');
     const meIdx = users.findIndex(u => u.email === auth.email);
@@ -30,15 +28,12 @@ export default function MyOrders({ auth }) {
     if (orderIdx === -1) return;
 
     if (received) {
-      // open rating modal
       setRatingOrderId(orderId);
       setRatingValue(0);
     } else {
-      // mark notReceived and set status Pending for buyer
       me.orders[orderIdx].notReceived = true;
       me.orders[orderIdx].status = "Pending";
 
-      // also set in seller's data (if seller has the same order)
       const sellerEmail = me.orders[orderIdx].product.owner;
       const sellerIdx = users.findIndex(u => u.email === sellerEmail);
       if (sellerIdx !== -1) {
@@ -66,14 +61,11 @@ export default function MyOrders({ auth }) {
     }
     const users = JSON.parse(localStorage.getItem(LS_USERS) || '[]');
     const meIdx = users.findIndex(u => u.email === auth.email);
-    if (meIdx === -1) return;
     const me = users[meIdx];
     const orderIdx = me.orders.findIndex(o => o.id === ratingOrderId);
-    if (orderIdx === -1) return;
 
     me.orders[orderIdx].rating = ratingValue;
     me.orders[orderIdx].rated = true;
-    // remove any notReceived flag (if any)
     delete me.orders[orderIdx].notReceived;
 
     users.splice(meIdx, 1, me);
@@ -83,77 +75,82 @@ export default function MyOrders({ auth }) {
     loadOrders();
   }
 
-  if (!auth) return <div className="card">Please <a href="/login">login</a> to view your orders.</div>;
-  if (!orders || orders.length === 0) return <div className="card">No orders yet.</div>;
+  if (!auth) return <div className="card" style={{ padding: 20 }}>Please <a href="/login">login</a> to view your orders.</div>;
+  if (!orders || orders.length === 0) return <div className="card" style={{ padding: 20 }}>No orders yet.</div>;
 
-  const btnStyle = {
-    padding: "8px 14px",
-    borderRadius: 8,
-    border: "none",
-    cursor: "pointer",
-  };
-
-  const successBtn = { ...btnStyle, background: "#16a34a", color: "white" };
-  const notRecBtn = { ...btnStyle, background: "#dc2626", color: "white" };
+  const btnStyle = { padding: "8px 14px", borderRadius: 8, border: "none", cursor: "pointer" };
+  const successBtn = { ...btnStyle, background: "#333", color: "white" };
+  const notRecBtn = { ...btnStyle, background: "#999", color: "white" };
 
   return (
-    <div className="container">
-      <h2>My Orders</h2>
+    <div className="container" style={{ maxWidth: 900, margin: "0 auto", padding: "20px 0" }}>
+      <h2 style={{ marginBottom: 20 }}>My Orders</h2>
 
       {orders.map(order => {
-        // Only show the "you marked not received" remark while order.status === "Pending"
         const showNotReceivedRemark = !!order.notReceived && order.status === "Pending";
 
         return (
-          <div key={order.id} className="card" style={{ marginBottom: 12, padding: 16 }}>
-            <div style={{ display: "flex", gap: 12 }}>
-              <div style={{ width: 80, height: 80, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 6 }}>
-                {order.product?.image ? <img src={order.product.image} alt="" style={{ maxWidth: 80, maxHeight: 80 }} /> : "Image"}
+          <div key={order.id} className="card" style={{
+            display: "flex",
+            gap: 16,
+            marginBottom: 16,
+            padding: 16,
+            borderRadius: 12,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+            alignItems: "center",
+            backgroundColor: "#fff"
+          }}>
+            {/* Product Image */}
+            <div style={{
+              flex: "0 0 100px",
+              height: 100,
+              borderRadius: 8,
+              overflow: "hidden",
+              backgroundColor: "#f0f0f0",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }}>
+              {order.product?.image ? (
+                <img
+                  src={order.product.image}
+                  alt={order.product.title}
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              ) : (
+                <span style={{ fontSize: 12, color: "#666" }}>No Image</span>
+              )}
+            </div>
+
+            {/* Details */}
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+              <div style={{ fontWeight: 700, fontSize: 16 }}>{order.product?.title}</div>
+              <div>Seller: {order.product?.owner}</div>
+              <div>Price: ₹ {order.product?.price}</div>
+              <div>Payment Method: {order.paymentMethod}</div>
+              <div style={{ marginTop: 6 }}>
+                <strong>Status: </strong>
+                <span style={{ color: order.status === "Pending" ? "red" : "#000", fontWeight: order.status === "Pending" ? 700 : 500 }}>
+                  {order.status}
+                </span>
               </div>
 
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700 }}>{order.product?.title}</div>
-                <div>Seller: {order.product?.owner}</div>
-                <div>Price: ₹ {order.product?.price}</div>
-                <div>Payment Method: {order.paymentMethod}</div>
+              {order.status === "Shipping (Estimated Date)" && order.estimatedDate && (
+                <div><strong>Estimated Delivery:</strong> {order.estimatedDate}</div>
+              )}
 
-                <div style={{ marginTop: 8 }}>
-                  <strong>Status: </strong>
-                  <span style={{
-                    color: order.status === "Pending" ? "red" : "black",
-                    fontWeight: order.status === "Pending" ? 700 : 500
-                  }}>{order.status}</span>
+              {showNotReceivedRemark && (
+                <div style={{ color: "red", fontWeight: 600 }}>⚠️ You marked this order as Not Received</div>
+              )}
+
+              {order.status === "Delivered" && !order.rated && !showNotReceivedRemark && (
+                <div style={{ marginTop: 8, display: "flex", gap: 12 }}>
+                  <button style={successBtn} onClick={() => confirmReceived(order.id, true)}>Successful</button>
+                  <button style={notRecBtn} onClick={() => confirmReceived(order.id, false)}>Not Received</button>
                 </div>
+              )}
 
-                {/* Estimated Delivery */}
-                {order.status === "Shipping (Estimated Date)" && order.estimatedDate && (
-                  <div style={{ marginTop: 6 }}>
-                    <strong>Estimated Delivery:</strong> {order.estimatedDate}
-                  </div>
-                )}
-
-                {/* Not Received remark while still pending */}
-                {showNotReceivedRemark && (
-                  <div style={{ color: "red", marginTop: 8, fontWeight: 600 }}>
-                    ⚠️ You marked this order as Not Received
-                  </div>
-                )}
-
-                {/* Delivered: show buttons only when not rated and not currently marked notReceived */}
-                {order.status === "Delivered" && !order.rated && !showNotReceivedRemark && (
-                  <div style={{ marginTop: 12, display: "flex", gap: 12 }}>
-                    <button style={successBtn} onClick={() => confirmReceived(order.id, true)}>Successful</button>
-                    <button style={notRecBtn} onClick={() => confirmReceived(order.id, false)}>Not Received</button>
-                  </div>
-                )}
-
-                {/* Already rated */}
-                {order.rated && (
-                  <div style={{ marginTop: 8 }}>
-                    ⭐ Your Rating: {order.rating}/5
-                  </div>
-                )}
-              </div>
+              {order.rated && <div style={{ marginTop: 6 }}>⭐ Your Rating: {order.rating}/5</div>}
             </div>
           </div>
         );
@@ -181,8 +178,8 @@ export default function MyOrders({ auth }) {
                     padding: "8px 12px",
                     borderRadius: 8,
                     border: "1px solid #ccc",
-                    background: ratingValue === n ? "#16a34a" : "#f3f4f6",
-                    color: ratingValue === n ? "white" : "black",
+                    background: ratingValue === n ? "#333" : "#f0f0f0",
+                    color: ratingValue === n ? "white" : "#000",
                     cursor: "pointer"
                   }}
                 >
@@ -190,9 +187,8 @@ export default function MyOrders({ auth }) {
                 </button>
               ))}
             </div>
-
             <div style={{ marginTop: 16, display: "flex", gap: 8 }}>
-              <button onClick={submitRating} style={{ ...btnStyle, background: "#2563eb", color: "white" }}>Submit</button>
+              <button onClick={submitRating} style={{ ...btnStyle, background: "#333", color: "white" }}>Submit</button>
               <button onClick={() => { setRatingOrderId(null); setRatingValue(0); }} style={{ ...btnStyle, background: "#eee" }}>Cancel</button>
             </div>
           </div>

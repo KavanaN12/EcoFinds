@@ -10,21 +10,20 @@ export default function AddProduct({ auth }) {
   const [desc, setDesc] = useState('');
   const [category, setCategory] = useState('Electronics');
   const [price, setPrice] = useState('');
-  const [image, setImage] = useState(''); // can be URL or Base64
+  const [image, setImage] = useState('');
   const [contribution, setContribution] = useState('');
   const [err, setErr] = useState('');
 
   if (!auth) {
-    return <div className="card">Please <a href="/login">login</a> to add product.</div>;
+    return <div className="card" style={{ padding: 20 }}>Please <a href="/login">login</a> to add product.</div>;
   }
 
-  // Handle local file selection
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = function (ev) {
-      setImage(ev.target.result); // Base64 string
+      setImage(ev.target.result);
     };
     reader.readAsDataURL(file);
   };
@@ -47,11 +46,10 @@ export default function AddProduct({ auth }) {
       contribution: contribution || "Supports eco-friendly living.",
       owner: auth.email
     };
-
     products.unshift(newProd);
     localStorage.setItem(LS_PRODUCTS, JSON.stringify(products));
 
-    // Award points for listing
+    // Award points
     const users = JSON.parse(localStorage.getItem(LS_USERS) || '[]');
     const userIdx = users.findIndex(u => u.email === auth.email);
     if (userIdx !== -1) {
@@ -64,15 +62,32 @@ export default function AddProduct({ auth }) {
   }
 
   return (
-    <div className="card small-card">
-      <h3>Add New Product</h3>
-      {err && <p className="error">{err}</p>}
-      <form onSubmit={handleSubmit}>
+    <div className="card" style={{
+      maxWidth: 500,
+      margin: "20px auto",
+      padding: 24,
+      borderRadius: 12,
+      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+      backgroundColor: "#fff"
+    }}>
+      <h3 style={{ marginBottom: 20 }}>Add New Product</h3>
+      {err && <p style={{ color: "red", marginBottom: 12 }}>{err}</p>}
+
+      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <label>Product Title</label>
-        <input value={title} onChange={e => setTitle(e.target.value)} required />
+        <input
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+          required
+          style={{ padding: 8, borderRadius: 6, border: "1px solid #ccc" }}
+        />
 
         <label>Category</label>
-        <select value={category} onChange={e => setCategory(e.target.value)}>
+        <select
+          value={category}
+          onChange={e => setCategory(e.target.value)}
+          style={{ padding: 8, borderRadius: 6, border: "1px solid #ccc" }}
+        >
           <option>Electronics</option>
           <option>Furniture</option>
           <option>Books</option>
@@ -81,40 +96,75 @@ export default function AddProduct({ auth }) {
         </select>
 
         <label>Description</label>
-        <textarea value={desc} onChange={e => setDesc(e.target.value)} />
+        <textarea
+          value={desc}
+          onChange={e => setDesc(e.target.value)}
+          style={{ padding: 8, borderRadius: 6, border: "1px solid #ccc", minHeight: 60 }}
+        />
 
         <label>Contribution towards Sustainability</label>
         <textarea
           value={contribution}
           onChange={e => setContribution(e.target.value)}
           placeholder="Explain how this product contributes to sustainability"
+          style={{ padding: 8, borderRadius: 6, border: "1px solid #ccc", minHeight: 60 }}
         />
 
         <label>Price (₹)</label>
-        <input value={price} onChange={e => setPrice(e.target.value)} type="number" required />
+        <input
+          value={price}
+          onChange={e => setPrice(e.target.value)}
+          type="number"
+          required
+          style={{ padding: 8, borderRadius: 6, border: "1px solid #ccc" }}
+        />
 
         <label>Image URL (optional)</label>
         <input
-          value={image.startsWith('data:') ? '' : image} // show URL input only if not Base64
+          value={image.startsWith('data:') ? '' : image}
           onChange={e => setImage(e.target.value)}
           placeholder="https://..."
+          style={{ padding: 8, borderRadius: 6, border: "1px solid #ccc" }}
         />
 
-        <div style={{ marginTop: 8 }}>
+        <div>
           <label>Or choose image from your device:</label>
-          <input type="file" accept="image/*" onChange={handleFileChange} />
+          <input type="file" accept="image/*" onChange={handleFileChange} style={{ marginTop: 6 }} />
         </div>
 
         {image && (
-          <div style={{ marginTop: 8 }}>
+          <div style={{ marginTop: 12 }}>
             <strong>Preview:</strong>
-            <div style={{ width: 100, height: 100, border: '1px solid #ccc', marginTop: 4 }}>
-              <img src={image} alt="Preview" style={{ maxWidth: '100%', maxHeight: '100%' }} />
+            <div style={{
+              width: 120,
+              height: 120,
+              border: "1px solid #ccc",
+              marginTop: 6,
+              borderRadius: 6,
+              overflow: "hidden",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }}>
+              <img src={image} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             </div>
           </div>
         )}
 
-        <button className="btn" type="submit" style={{ marginTop: 12 }}>Submit Listing</button>
+        <button
+          type="submit"
+          style={{
+            marginTop: 16,
+            padding: "10px 16px",
+            borderRadius: 8,
+            border: "none",
+            backgroundColor: "#333",
+            color: "white",
+            cursor: "pointer"
+          }}
+        >
+          Submit Listing
+        </button>
       </form>
     </div>
   );

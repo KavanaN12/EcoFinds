@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from 'react';
 
 const LS_USERS = 'eco_users_v1';
-const STATUS_OPTIONS = ["Waiting for Production", "Paid", "Shipping (Estimated Date)", "Ready in Remote", "Delivered", "Pending"];
+const STATUS_OPTIONS = [
+  "Waiting for Production",
+  "Paid",
+  "Shipping (Estimated Date)",
+  "Ready in Remote",
+  "Delivered",
+  "Pending"
+];
 
 export default function SellerOrders({ auth }) {
   const [orders, setOrders] = useState([]);
@@ -29,7 +36,6 @@ export default function SellerOrders({ auth }) {
     setOrders(all);
   }
 
-  // update seller chooses newStatus; propagate to buyer and clear notReceived if applicable
   function updateStatus(orderId, buyerEmail, newStatus) {
     const users = JSON.parse(localStorage.getItem(LS_USERS) || '[]');
     const buyerIdx = users.findIndex(u => u.email === buyerEmail);
@@ -38,28 +44,15 @@ export default function SellerOrders({ auth }) {
     const orderIdx = buyer.orders.findIndex(o => o.id === orderId);
     if (orderIdx === -1) return;
 
-    // set status on buyer order
     buyer.orders[orderIdx].status = newStatus;
+    if (newStatus !== "Pending") delete buyer.orders[orderIdx].notReceived;
+    if (newStatus !== "Shipping (Estimated Date)") delete buyer.orders[orderIdx].estimatedDate;
 
-    // If seller changes status away from Pending, remove buyer's notReceived flag
-    if (newStatus !== "Pending") {
-      delete buyer.orders[orderIdx].notReceived;
-    }
-
-    // if seller changed away from "Shipping (Estimated Date)", we may clear estimatedDate unless they set it separately
-    if (newStatus !== "Shipping (Estimated Date)") {
-      delete buyer.orders[orderIdx].estimatedDate;
-    }
-
-    // persist buyer changes
     users.splice(buyerIdx, 1, buyer);
     localStorage.setItem(LS_USERS, JSON.stringify(users));
-
-    // reload seller view to reflect changes
     loadOrders();
   }
 
-  // set estimated date (seller action) — stored on buyer's order
   function setEstimatedDate(orderId, buyerEmail, dateStr) {
     const users = JSON.parse(localStorage.getItem(LS_USERS) || '[]');
     const buyerIdx = users.findIndex(u => u.email === buyerEmail);
@@ -69,10 +62,7 @@ export default function SellerOrders({ auth }) {
     if (orderIdx === -1) return;
 
     buyer.orders[orderIdx].estimatedDate = dateStr;
-    // ensure status indicates shipping if not already
     buyer.orders[orderIdx].status = "Shipping (Estimated Date)";
-
-    // if buyer previously marked notReceived, clear it now (seller is acting)
     delete buyer.orders[orderIdx].notReceived;
 
     users.splice(buyerIdx, 1, buyer);
@@ -80,65 +70,73 @@ export default function SellerOrders({ auth }) {
     loadOrders();
   }
 
-  if (!auth) return <div className="card">Please login to view seller orders.</div>;
-  if (!orders || orders.length === 0) return <div className="card">No orders for your products yet.</div>;
+  if (!auth) return <div className="card" style={{ padding: 20 }}>Please login to view seller orders.</div>;
+  if (!orders || orders.length === 0) return <div className="card" style={{ padding: 20 }}>No orders for your products yet.</div>;
 
   return (
-    <div className="container">
-      <h2>Orders for Your Products</h2>
+    <div className="container" style={{ maxWidth: 900, margin: "0 auto", padding: "20px 0" }}>
+      <h2 style={{ marginBottom: 20 }}>Orders for Your Products</h2>
 
       {orders.map(order => (
-        <div key={order.id} className="card" style={{ marginBottom: 12, padding: 16 }}>
-          <div style={{ display: "flex", gap: 12 }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700 }}>{order.product?.title}</div>
-              <div>Buyer: {order.buyerName}</div>
-              <div>Price: ₹ {order.product?.price}</div>
-              <div>Payment Method: {order.paymentMethod}</div>
+        <div
+          key={order.id}
+          className="card"
+          style={{
+            marginBottom: 16,
+            padding: 20,
+            borderRadius: 12,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            backgroundColor: "#fff",
+            transition: "transform 0.1s",
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ fontWeight: 700, fontSize: 18 }}>{order.product?.title}</div>
+            <div>Buyer: {order.buyerName}</div>
+            <div>Price: ₹ {order.product?.price}</div>
+            <div>Payment Method: {order.paymentMethod}</div>
 
-              <div style={{ marginTop: 8 }}>
+            <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
+              <label>
                 <strong>Status: </strong>
                 <select
                   value={order.status}
                   onChange={(e) => updateStatus(order.id, order.buyerEmail, e.target.value)}
                   style={{
                     marginLeft: 8,
-                    padding: "6px 8px",
-                    borderRadius: 8,
+                    padding: "6px 10px",
+                    borderRadius: 6,
                     border: "1px solid #ccc",
-                    color: order.status === "Pending" ? "red" : "black",
-                    fontWeight: order.status === "Pending" ? 700 : 500
+                    color: order.status === "Pending" ? "red" : "#333",
+                    fontWeight: order.status === "Pending" ? 700 : 500,
+                    minWidth: 200
                   }}
                 >
                   {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
+              </label>
 
-                {/* Show small red Not Received note if buyer flagged it */}
-                {order.notReceived && (
-                  <div style={{ color: "red", marginTop: 8, fontWeight: 700 }}>
-                    ⚠ Buyer marked Not Received (please respond)
-                  </div>
-                )}
-              </div>
+              {order.notReceived && (
+                <div style={{ color: "red", fontWeight: 700 }}>
+                  ⚠ Buyer marked Not Received (please respond)
+                </div>
+              )}
 
-              {/* If status is Shipping (Estimated Date), allow seller to set date */}
               {order.status === "Shipping (Estimated Date)" && (
-                <div style={{ marginTop: 8 }}>
-                  <label style={{ fontSize: 14 }}>Estimated delivery date: </label>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+                  <label style={{ fontSize: 14 }}>Estimated delivery date:</label>
                   <input
                     type="date"
                     value={order.estimatedDate || ""}
                     onChange={(e) => setEstimatedDate(order.id, order.buyerEmail, e.target.value)}
-                    style={{ marginLeft: 8, padding: "6px 8px", borderRadius: 6, border: "1px solid #ccc" }}
+                    style={{ padding: "6px 8px", borderRadius: 6, border: "1px solid #ccc" }}
                   />
                 </div>
               )}
-
             </div>
           </div>
         </div>
       ))}
-
     </div>
   );
 }
