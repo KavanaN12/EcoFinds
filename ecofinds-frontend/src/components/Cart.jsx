@@ -8,15 +8,18 @@ export default function Cart({ auth, setAuth }) {
   const [cart, setCart] = useState([]);
   const [total, setTotal] = useState(0);
   const [paymentMethods, setPaymentMethods] = useState({});
+  const [showModal, setShowModal] = useState(false);
+  const [shippingAddress, setShippingAddress] = useState("");
+  const [selectedItem, setSelectedItem] = useState(null);
+
   const nav = useNavigate();
 
-  // Load cart and initialize payment methods
+  // Load cart
   useEffect(() => {
     if (!auth) {
       setCart([]);
       return;
     }
-
     const users = JSON.parse(localStorage.getItem(LS_USERS) || '[]');
     const user = users.find(u => u.email === auth.email);
     const c = user?.cart || [];
@@ -28,7 +31,7 @@ export default function Cart({ auth, setAuth }) {
     setPaymentMethods(pm);
   }, [auth]);
 
-  // Remove item from cart
+  // Remove item
   const removeItem = (id) => {
     const users = JSON.parse(localStorage.getItem(LS_USERS) || '[]');
     const idx = users.findIndex(u => u.email === auth.email);
@@ -43,56 +46,72 @@ export default function Cart({ auth, setAuth }) {
     setTotal(user.cart.reduce((sum, item) => sum + (item.price || 0), 0));
   };
 
-  // For COD: checkout immediately
-  const handleCheckoutProduct = (item) => {
-    if (!auth) { nav('/login'); return; }
+  // Open modal for checkout
+  const openCheckoutModal = (item) => {
+    setSelectedItem(item);
+    setShippingAddress("");
+    setShowModal(true);
+  };
 
-    if (paymentMethods[item.id] === "Card") {
-      // Card requires Pay Now
-      alert(`Please click "Pay Now" to complete payment for "${item.title}"`);
+  // Get current location
+  const fillCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation not supported");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const loc = `Lat: ${pos.coords.latitude}, Lng: ${pos.coords.longitude}`;
+        setShippingAddress(loc);
+      },
+      () => alert("Unable to fetch location")
+    );
+  };
+
+  // Finalize checkout
+  const confirmBuyNow = () => {
+    if (!shippingAddress.trim()) {
+      alert("Please enter shipping address!");
       return;
     }
 
-    processCheckout(item, "Pending"); // COD: status Pending
+    const item = selectedItem;
+    const paymentType = paymentMethods[item.id];
+    const status = paymentType === "Card" ? "Paid" : "Pending";
+
+    processCheckout(item, status, shippingAddress);
+    setShowModal(false);
   };
 
-  // For Card: process Pay Now
-  const handlePayNow = (item) => {
-    processCheckout(item, "Paid");
-  };
-
-  // Common checkout process
-  const processCheckout = (item, status) => {
+  // Process checkout
+  const processCheckout = (item, status, address) => {
     const users = JSON.parse(localStorage.getItem(LS_USERS) || '[]');
     const idx = users.findIndex(u => u.email === auth.email);
     if (idx === -1) return;
 
     const user = users[idx];
-
-    // Create new order
     user.orders = user.orders || [];
+
     const newOrder = {
       id: 'order_' + Date.now(),
       product: item,
-      status: status,
+      status,
       paymentMethod: paymentMethods[item.id],
       date: new Date().toISOString().split('T')[0],
+      shippingAddress: address,
       owner: item.owner || ''
     };
     user.orders.push(newOrder);
 
-    // Award points
     const gained = 5;
     user.ecoPoints = (user.ecoPoints || 0) + gained;
     user.transactions = (user.transactions || 0) + 1;
 
-    // Remove from cart
     user.cart = (user.cart || []).filter(p => p.id !== item.id);
 
     users.splice(idx, 1, user);
     localStorage.setItem(LS_USERS, JSON.stringify(users));
 
-    // Remove purchased item from global products
     const prods = JSON.parse(localStorage.getItem(LS_PRODUCTS) || '[]');
     const remaining = prods.filter(p => p.id !== item.id);
     localStorage.setItem(LS_PRODUCTS, JSON.stringify(remaining));
@@ -143,12 +162,9 @@ export default function Cart({ auth, setAuth }) {
 
                 <div style={{ marginTop:8, display:'flex', gap:6 }}>
                   <button className="btn small ghost" onClick={() => removeItem(item.id)}>Remove</button>
-
-                  {paymentMethods[item.id] === "Card" ? (
-                    <button className="btn small" onClick={() => handlePayNow(item)}>Pay Now</button>
-                  ) : (
-                    <button className="btn small" onClick={() => handleCheckoutProduct(item)}>Checkout</button>
-                  )}
+                  <button className="btn small" onClick={() => openCheckoutModal(item)}>
+                    {paymentMethods[item.id] === "Card" ? "Pay Now" : "Checkout"}
+                  </button>
                 </div>
               </div>
             </div>
@@ -159,6 +175,57 @@ export default function Cart({ auth, setAuth }) {
       <div style={{ marginTop:20 }}>
         <strong>Total: ₹ {total}</strong>
       </div>
+
+      {/* Floating Checkout Modal */}
+      {showModal && selectedItem && (
+        <div style={{
+          position: "fixed",
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(0,0,0,0.6)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: "#fff",
+            padding: 20,
+            borderRadius: 12,
+            width: "90%",
+            maxWidth: 400
+          }}>
+            <h3>Shipping Details</h3>
+            <p>For: <strong>{selectedItem.title}</strong></p>
+            <textarea
+              rows={3}
+              value={shippingAddress}
+              onChange={(e) => setShippingAddress(e.target.value)}
+              placeholder="Enter your shipping address"
+              style={{ width: "100%", marginTop: 10, padding: 8, borderRadius: 6, border: "1px solid #ccc" }}
+            />
+            <button
+              onClick={fillCurrentLocation}
+              style={{ marginTop: 8, background: "orange", border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer" }}
+            >
+              Use Current Location
+            </button>
+            <div style={{ marginTop: 16, display: "flex", justifyContent: "space-between" }}>
+              <button
+                onClick={() => setShowModal(false)}
+                style={{ padding: "8px 16px", borderRadius: 6, border: "1px solid #aaa", background: "#eee", cursor: "pointer" }}
+              >
+                Back
+              </button>
+              <button
+                onClick={confirmBuyNow}
+                style={{ padding: "8px 16px", borderRadius: 6, border: "none", background: "green", color: "#fff", cursor: "pointer" }}
+              >
+                Buy Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
