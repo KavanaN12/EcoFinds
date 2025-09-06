@@ -1,7 +1,5 @@
 # Eco Marketplace 🌱
 
-![React](https://img.shields.io/badge/React-17.0.2-blue?logo=react&logoColor=white) ![License](https://img.shields.io/badge/License-MIT-green) ![LocalStorage](https://img.shields.io/badge/Storage-localStorage-orange)
-
 A **sustainable marketplace** web app where users can buy, sell, and track eco-friendly products, earn EcoPoints, and monitor their environmental impact — all **offline** using `localStorage`.
 
 ---
